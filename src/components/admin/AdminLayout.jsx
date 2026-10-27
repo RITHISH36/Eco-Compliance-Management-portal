@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import {
   FaBars,
@@ -8,8 +9,11 @@ import {
   FaLeaf,
   FaListUl,
   FaMapMarkerAlt,
+  FaMoon,
   FaSearch,
   FaSignOutAlt,
+  FaSun,
+  FaCopy,
   FaUser,
 } from "react-icons/fa";
 import "./AdminPortal.css";
@@ -17,6 +21,7 @@ import "./AdminPortal.css";
 const navItems = [
   { to: "/admin/dashboard", label: "Dashboard", icon: <FaHome /> },
   { to: "/admin/manage-issues", label: "Manage Issues", icon: <FaListUl /> },
+  { to: "/admin/spam-reports", label: "Duplicate Reports", icon: <FaCopy /> },
   { to: "/admin/transparency-map", label: "Transparency Map", icon: <FaMapMarkerAlt /> },
   { to: "/admin/analytics", label: "Analytics", icon: <FaChartLine /> },
   { to: "/admin/users", label: "Users", icon: <FaUser /> },
@@ -26,6 +31,16 @@ const navItems = [
 
 const AdminLayout = () => {
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem("eco-theme");
+    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("eco-theme", theme);
+  }, [theme]);
 
   const handleLogout = () => {
     localStorage.removeItem("ecoLoggedIn");
@@ -84,8 +99,16 @@ const AdminLayout = () => {
                 <FaSearch />
                 <input type="text" placeholder="Search" />
               </label>
-              <button type="button"><FaBell /></button>
               <button type="button" className="notify-dot-v2"><FaBell /></button>
+              <button
+                type="button"
+                className="admin-theme-toggle-v2"
+                onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              >
+                {theme === "dark" ? <FaSun /> : <FaMoon />}
+              </button>
               <img src="/logo-removebg-preview.png" alt="Admin profile" />
             </div>
           </header>

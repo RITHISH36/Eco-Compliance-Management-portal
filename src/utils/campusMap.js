@@ -1,13 +1,13 @@
 export const BAIET_CAMPUS_CENTER = {
-  lat: 11.4986,
-  lng: 77.2743,
+  lat: 11.4966,
+  lng: 77.2778,
 };
 
 export const BAIET_CAMPUS_BOUNDS = {
-  north: 11.5068,
-  south: 11.4904,
-  east: 77.2828,
-  west: 77.2658,
+  north: 11.5022,
+  south: 11.4908,
+  east: 77.2820,
+  west: 77.2738,
 };
 
 export const BAIET_MAP_OPTIONS = {
@@ -23,26 +23,48 @@ export const BAIET_MAP_OPTIONS = {
 };
 
 export const BAIET_BLOCK_COORDS = {
-  IB: { lat: 11.4993, lng: 77.2729, zone: "Central Campus Zone" },
-  AS: { lat: 11.5008, lng: 77.2736, zone: "North Campus Zone" },
-  SF: { lat: 11.4979, lng: 77.2761, zone: "Central Campus Zone" },
-  MECH: { lat: 11.5011, lng: 77.2758, zone: "North Campus Zone" },
-  CAFETARIA: { lat: 11.4967, lng: 77.2734, zone: "South Campus Zone" },
-  Ground: { lat: 11.4949, lng: 77.2768, zone: "South Campus Zone" },
-  Parking: { lat: 11.4957, lng: 77.2718, zone: "South Campus Zone" },
-  "Girls Hostel": { lat: 11.5031, lng: 77.2781, zone: "Hostel Zone" },
-  "Boys Hostel": { lat: 11.4928, lng: 77.2784, zone: "Hostel Zone" },
-  Others: { lat: 11.4986, lng: 77.2743, zone: "Campus Zone" },
-  "Block A": { lat: 11.5004, lng: 77.2726, zone: "Academic Core" },
-  "Block B": { lat: 11.4990, lng: 77.2748, zone: "Academic Core" },
-  "Block C": { lat: 11.5018, lng: 77.2747, zone: "Academic Core" },
-  "IB Block": { lat: 11.4993, lng: 77.2729, zone: "Central Campus Zone" },
-  "Playground Area": { lat: 11.4949, lng: 77.2768, zone: "Sports Zone" },
-  "Academic Block A": { lat: 11.5004, lng: 77.2726, zone: "Academic Core" },
-  "Library Block": { lat: 11.4985, lng: 77.2763, zone: "Academic Core" },
-  "Sports Complex": { lat: 11.4944, lng: 77.2776, zone: "Sports Zone" },
-  "Hostel Block": { lat: 11.5031, lng: 77.2781, zone: "Hostel Zone" },
+  IB: { lat: 11.49534, lng: 77.27663, zone: "IB Academic Core" },
+  AS: { lat: 11.49534, lng: 77.27853, zone: "AS Academic Core" },
+  SF: { lat: 11.49569, lng: 77.27998, zone: "East Academic Zone" },
+  MECH: { lat: 11.49473, lng: 77.27998, zone: "East Academic Zone" },
+  CAFETARIA: { lat: 11.49234, lng: 77.27855, zone: "South Campus Zone" },
+  Ground: { lat: 11.49142, lng: 77.27842, zone: "Playground Zone" },
+  Parking: { lat: 11.50054, lng: 77.27998, zone: "North-East Campus Zone" },
+  "Girls Hostel": { lat: 11.49214, lng: 77.27592, zone: "Hostel Zone" },
+  "Boys Hostel": { lat: 11.49297, lng: 77.28078, zone: "Hostel Zone" },
+  Others: { lat: 11.4970, lng: 77.2771, zone: "Campus Zone" },
+  "Block A": { lat: 11.49534, lng: 77.27663, zone: "IB Academic Core" },
+  "Block B": { lat: 11.49534, lng: 77.27853, zone: "AS Academic Core" },
+  "Block C": { lat: 11.49569, lng: 77.27998, zone: "East Academic Zone" },
+  "IB Block": { lat: 11.49534, lng: 77.27663, zone: "IB Academic Core" },
+  "Playground Area": { lat: 11.49142, lng: 77.27842, zone: "Playground Zone" },
+  "Academic Block A": { lat: 11.49534, lng: 77.27663, zone: "IB Academic Core" },
+  "Library Block": { lat: 11.49306, lng: 77.27765, zone: "Academic Core" },
+  "Sports Complex": { lat: 11.49640, lng: 77.27450, zone: "Sports Zone" },
+  "Hostel Block": { lat: 11.49214, lng: 77.27592, zone: "Hostel Zone" },
 };
+
+export const isPointInsideCampus = (point) => {
+  const lat = Number(point?.lat);
+  const lng = Number(point?.lng);
+
+  return Number.isFinite(lat) && Number.isFinite(lng)
+    && lat >= BAIET_CAMPUS_BOUNDS.south
+    && lat <= BAIET_CAMPUS_BOUNDS.north
+    && lng >= BAIET_CAMPUS_BOUNDS.west
+    && lng <= BAIET_CAMPUS_BOUNDS.east;
+};
+
+export const getCampusBlockFeatures = () => ({
+  type: "FeatureCollection",
+  features: Object.entries(BAIET_BLOCK_COORDS)
+    .filter(([block]) => !["Others", "IB Block", "Playground Area", "Academic Block A", "Library Block", "Sports Complex", "Hostel Block"].includes(block))
+    .map(([block, point]) => ({
+      type: "Feature",
+      properties: { block },
+      geometry: { type: "Point", coordinates: [point.lng, point.lat] },
+    })),
+});
 
 export const getCampusPoint = (block, index = 0) =>
   BAIET_BLOCK_COORDS[block] || {

@@ -8,9 +8,24 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router";
 import Header from "./Header";
 import { getReports, getReportStats } from "../utils/reportStore";
+import { fetchAwareness } from "../utils/api";
+
+const DEFAULT_AWARENESS = {
+  tips: "Switch off lights, fans, and projectors after class.\nPrefer natural daylight where possible.\nSet AC temperature to efficient levels (24-26 C).\nUnplug chargers and devices when not in use.",
+  policies: "Single-use plastics are discouraged across campus zones.\nMonthly eco-audits are conducted block-wise.\nEvery department must report waste reduction actions.\nGreen volunteers support awareness drives each semester.",
+  announcement: "Green Campus Drive starts this Friday.",
+  complianceFormula: "(Resolved Issues / Total Issues) x 100",
+};
+
+const toListItems = (value, fallback) =>
+  (value || fallback)
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 const EcoAwareness = () => {
   const [reports, setReports] = useState([]);
+  const [awareness, setAwareness] = useState(DEFAULT_AWARENESS);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,6 +45,21 @@ const EcoAwareness = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const loadAwareness = async () => {
+      try {
+        const nextAwareness = await fetchAwareness();
+        setAwareness({ ...DEFAULT_AWARENESS, ...nextAwareness });
+      } catch (err) {
+        setError(err.message || "Unable to load awareness content.");
+      }
+    };
+
+    loadAwareness();
+    window.addEventListener("eco-awareness-changed", loadAwareness);
+    return () => window.removeEventListener("eco-awareness-changed", loadAwareness);
+  }, []);
+
   const { total: totalIssues, resolved: resolvedIssues, complianceRate } =
     useMemo(() => getReportStats(reports), [reports]);
 
@@ -43,12 +73,16 @@ const EcoAwareness = () => {
             Learn practical sustainability actions for campus life beyond
             complaint reporting.
           </p>
+          <div className="eco-announcement">
+            <strong>Campus update</strong>
+            <span>{awareness.announcement}</span>
+          </div>
           {error ? <p className="auth-alert auth-alert-error">{error}</p> : null}
 
           <div className="eco-score-card">
             <h2>Campus Eco Compliance Rate: {complianceRate}%</h2>
             <p>
-              Sustainability Score = (Resolved Issues / Total Issues) x 100
+              Sustainability Score = {awareness.complianceFormula}
             </p>
 
             <div className="eco-score-progress">
@@ -97,10 +131,9 @@ const EcoAwareness = () => {
                 Energy Saving Tips
               </h3>
               <ul>
-                <li>Switch off lights, fans, and projectors after class.</li>
-                <li>Prefer natural daylight where possible.</li>
-                <li>Set AC temperature to efficient levels (24-26 C).</li>
-                <li>Unplug chargers and devices when not in use.</li>
+                {toListItems(awareness.tips, DEFAULT_AWARENESS.tips).map((tip) => (
+                  <li key={tip}>{tip}</li>
+                ))}
               </ul>
             </article>
 
@@ -110,10 +143,9 @@ const EcoAwareness = () => {
                 Campus Sustainability Policies
               </h3>
               <ul>
-                <li>Single-use plastics are discouraged across campus zones.</li>
-                <li>Monthly eco-audits are conducted block-wise.</li>
-                <li>Every department must report waste reduction actions.</li>
-                <li>Green volunteers support awareness drives each semester.</li>
+                {toListItems(awareness.policies, DEFAULT_AWARENESS.policies).map((policy) => (
+                  <li key={policy}>{policy}</li>
+                ))}
               </ul>
             </article>
           </div>

@@ -23,67 +23,79 @@ const buildUrl = (path, query) => {
   return url.toString();
 };
 
-const request = async (path, options = {}) => {
-  const headers = new Headers(options.headers || {});
+const request = async (path, { method = "GET", data, query, headers = {} } = {}) => {
+  const requestHeaders = {
+    Accept: "application/json",
+    ...headers,
+  };
   const token = getAuthToken();
 
-  if (!headers.has("Content-Type") && options.body) {
-    headers.set("Content-Type", "application/json");
+  if (data !== undefined && !requestHeaders["Content-Type"]) {
+    requestHeaders["Content-Type"] = "application/json";
   }
   if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
+    requestHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildUrl(path, options.query), {
-    method: options.method || "GET",
-    headers,
-    body: options.body,
+  const response = await fetch(buildUrl(path, query), {
+    method,
+    headers: requestHeaders,
+    body: data === undefined ? undefined : JSON.stringify(data),
   });
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
-
-  if (!response.ok) {
-    throw new Error(data?.message || `Request failed with status ${response.status}`);
+  let responseData = null;
+  if (text) {
+    try {
+      responseData = JSON.parse(text);
+    } catch {
+      responseData = { message: text };
+    }
   }
 
-  return data;
+  if (!response.ok) {
+    throw new Error(responseData?.message || `Request failed with status ${response.status}`);
+  }
+
+  return responseData;
 };
 
 export const registerUser = (payload) =>
   request("/auth/register", {
     method: "POST",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const loginUser = (payload) =>
   request("/auth/login", {
     method: "POST",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const loginAdmin = (payload) =>
   request("/auth/admin-login", {
     method: "POST",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const requestPhoneOtp = (payload) =>
   request("/auth/phone/request-otp", {
     method: "POST",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const verifyPhoneOtp = (payload) =>
   request("/auth/phone/verify-otp", {
     method: "POST",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const fetchReports = (query) =>
   request("/reports", {
     query,
   });
+
+export const fetchSpamReports = () => request("/reports/spam");
 
 export const fetchMyReports = () => request("/reports/my");
 
@@ -92,25 +104,25 @@ export const fetchHomeStats = () => request("/reports/summary");
 export const createReport = (payload) =>
   request("/reports", {
     method: "POST",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const patchReportStatus = (reportNumber, status) =>
   request(`/reports/${reportNumber}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status }),
+    data: { status },
   });
 
 export const patchReportMeta = (reportNumber, payload) =>
   request(`/reports/${reportNumber}/meta`, {
     method: "PATCH",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const postInternalNote = (reportNumber, note) =>
   request(`/reports/${reportNumber}/notes`, {
     method: "PATCH",
-    body: JSON.stringify({ note }),
+    data: { note },
   });
 
 export const fetchUsers = () => request("/users");
@@ -130,7 +142,7 @@ export const fetchAwareness = () => request("/awareness");
 export const saveAwareness = (payload) =>
   request("/awareness", {
     method: "PUT",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const fetchSettings = () => request("/settings");
@@ -138,7 +150,7 @@ export const fetchSettings = () => request("/settings");
 export const saveSettings = (payload) =>
   request("/settings", {
     method: "PUT",
-    body: JSON.stringify(payload),
+    data: payload,
   });
 
 export const fetchNotifications = () => request("/notifications");
@@ -146,5 +158,5 @@ export const fetchNotifications = () => request("/notifications");
 export const createNotification = (payload) =>
   request("/notifications", {
     method: "POST",
-    body: JSON.stringify(payload),
+    data: payload,
   });

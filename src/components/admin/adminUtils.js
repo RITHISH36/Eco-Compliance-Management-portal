@@ -3,6 +3,7 @@ import {
   fetchAwareness,
   fetchNotifications,
   fetchReports,
+  fetchSpamReports,
   fetchSettings,
   fetchUsers,
   patchReportMeta,
@@ -76,6 +77,11 @@ const safeParse = (value, fallback) => {
 
 export const getAdminReports = async () => {
   const reports = await fetchReports();
+  return reports.map(normalizeReport);
+};
+
+export const getSpamReports = async () => {
+  const reports = await fetchSpamReports();
   return reports.map(normalizeReport);
 };
 

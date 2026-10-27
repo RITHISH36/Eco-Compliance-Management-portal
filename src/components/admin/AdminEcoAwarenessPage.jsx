@@ -27,6 +27,7 @@ const AdminEcoAwarenessPage = () => {
   const save = async () => {
     try {
       await saveAwarenessContent(content);
+      window.dispatchEvent(new Event("eco-awareness-changed"));
       setMessage("Awareness content updated.");
       setError("");
       setTimeout(() => setMessage(""), 2000);

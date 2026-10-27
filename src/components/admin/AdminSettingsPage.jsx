@@ -2,15 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FaBell,
   FaBullhorn,
-  FaEnvelope,
   FaLock,
   FaMapMarkedAlt,
   FaSearch,
   FaShieldAlt,
   FaTags,
-  FaUserCog,
-  FaUserCircle,
-  FaUserShield,
 } from "react-icons/fa";
 import {
   getAdminNotifications,
@@ -35,13 +31,6 @@ const SETTINGS_ITEMS = [
     title: "Campus Zones",
     description: "Location lists, block naming, zone visibility",
     icon: FaMapMarkedAlt,
-  },
-  {
-    id: "profile",
-    group: "Accounts",
-    title: "Admin Profile",
-    description: "Name, contact mail, account identity",
-    icon: FaUserShield,
   },
   {
     id: "security",
@@ -298,78 +287,6 @@ const AdminSettingsPage = () => {
       );
     }
 
-    if (activeItem === "profile") {
-      return (
-        <>
-          <div className="settings-page-hero-v4">
-            <div>
-              <p>Accounts</p>
-              <h1>Admin Profile</h1>
-              <span>Review the account owner details, contact identity, and profile information for the admin portal.</span>
-            </div>
-          </div>
-
-          <div className="settings-profile-page-v4">
-            <div className="settings-profile-card-v4">
-              <div className="settings-profile-avatar-v4">
-                <FaUserCircle />
-              </div>
-              <div className="settings-profile-meta-v4">
-                <strong>{settings.adminName || "Admin"}</strong>
-                <span>{settings.adminEmail || "admin@ecoportal.com"}</span>
-                <small>Primary administrator</small>
-              </div>
-            </div>
-
-            <div className="settings-page-grid-v4">
-              <div className="settings-editor-card-v2">
-                <div className="settings-editor-head-v2">
-                  <h3>Profile details</h3>
-                  <span>Main account information</span>
-                </div>
-                <label>
-                  Name
-                  <input
-                    type="text"
-                    value={settings.adminName}
-                    onChange={(e) => setSettings((prev) => ({ ...prev, adminName: e.target.value }))}
-                  />
-                </label>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    value={settings.adminEmail}
-                    onChange={(e) => setSettings((prev) => ({ ...prev, adminEmail: e.target.value }))}
-                  />
-                </label>
-                <button type="button" onClick={save} className={isSaving ? "btn-loading" : ""} disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Profile"}
-                </button>
-              </div>
-
-              <div className="settings-sidepanel-v4">
-                <div className="settings-feature-row-v4">
-                  <div className="settings-feature-icon-v4"><FaUserCog /></div>
-                  <div>
-                    <strong>Account role</strong>
-                    <span>Administrator access to reports, analytics, users, and settings</span>
-                  </div>
-                </div>
-                <div className="settings-feature-row-v4">
-                  <div className="settings-feature-icon-v4"><FaEnvelope /></div>
-                  <div>
-                    <strong>Contact mail</strong>
-                    <span>Used as the visible admin identity throughout the portal</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      );
-    }
-
     if (activeItem === "security") {
       return (
         <>
@@ -588,13 +505,6 @@ const AdminSettingsPage = () => {
         <aside className="settings-sidebar-v3">
           <div className="settings-sidebar-top-v3">
             <button type="button" className="settings-back-v3">Settings</button>
-            <div className="settings-profile-v3">
-              <FaUserCircle />
-              <div>
-                <strong>{settings.adminName || "Admin"}</strong>
-                <span>{settings.adminEmail || "admin@ecoportal.com"}</span>
-              </div>
-            </div>
             <label className="settings-search-v3">
               <FaSearch />
               <input

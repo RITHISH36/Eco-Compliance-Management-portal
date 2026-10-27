@@ -5,14 +5,17 @@ import { fetchHomeStats, loginUser, requestPhoneOtp, verifyPhoneOtp } from "../u
 import { saveSession } from "../utils/session";
 import { useToast } from "./ui/ToastProvider";
 
+const ABOUT_SECTIONS = ["value", "mission", "vision"];
+
 const Home = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isopen, setisopen] = useState(false);
     const [isphone, setisphone] = useState(false);
-    const [isvalue, setisvalue] = useState(false);
-    const [isvision, setisvision] = useState(false);
-    const [ismission, setismission] = useState(false);
+    const [activeAbout, setActiveAbout] = useState("value");
+    const isvalue = activeAbout === "value";
+    const ismission = activeAbout === "mission";
+    const isvision = activeAbout === "vision";
     const [otp, setotp] = useState(["", "", "", "", "", ""]);
     const [phoneNumber, setPhoneNumber] = useState("");
     const [phoneLoginError, setPhoneLoginError] = useState("");
@@ -165,16 +168,27 @@ const Home = () => {
     };
 
     const handlevalue = () => {
-        setisvalue(!isvalue);
+        setActiveAbout((current) => current === "value" ? "" : "value");
     };
 
     const handlevision = () => {
-        setisvision(!isvision);
+        setActiveAbout((current) => current === "vision" ? "" : "vision");
     };
 
     const handlemisson = () => {
-        setismission(!ismission);
+        setActiveAbout((current) => current === "mission" ? "" : "mission");
     };
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setActiveAbout((current) => {
+                const currentIndex = ABOUT_SECTIONS.indexOf(current);
+                return ABOUT_SECTIONS[(currentIndex + 1) % ABOUT_SECTIONS.length];
+            });
+        }, 3000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
 
     useEffect(() => {
         if (location.state?.loginRequired) {
@@ -254,9 +268,9 @@ const Home = () => {
                 <div className="home-shell">
                     <section className="home-hero">
                         <div className="home-brand">
-                            <img src="/logo-removebg-preview.png" alt="Eco-Compliance Portal Logo" />
+                            <img src="/logo-removebg-preview.png" alt="Campus Maintenance Portal Logo" />
                             <div className="home-copy">
-                                <h1>Eco-Compliance Portal</h1>
+                                <h1>Campus Maintenance Portal</h1>
                                 <p>~A smart platform for campus environmental issue tracking.</p>
                                 {authNotice ? <p className="auth-alert">{authNotice}</p> : null}
                                 <div className="home-divider" />
@@ -389,7 +403,7 @@ const Home = () => {
                     <div className="headerofabout-ctn">
                         <h2>Who We Are?</h2>
                         <p>
-                            The Campus Eco-Compliance Management System is a smart digital platform that empowers students and administrators to report, monitor, and resolve environmental issues transparently.
+                          BIT Campus Maintenance Request Desk with Geotagged Issue Uploads and Technician Dispatch is a smart web-based platform for reporting and managing campus maintenance issues. Users can submit geotagged complaints with images, while administrators assign technicians and monitor progress. Our goal is to ensure transparent and timely resolution of maintenance requests.
                             <br />
                             Our goal is to create a campus culture where sustainability is not just encouraged - it is actively practiced and tracked.
                         </p>

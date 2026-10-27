@@ -1,5 +1,5 @@
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import { useEffect, useMemo, useState } from "react";
+import Transparencymap from "../Transparencymap";
 import {
   WORKFLOW_OPTIONS,
   getAdminReports,
@@ -7,17 +7,7 @@ import {
   toggleZoneMaintenance,
   updateReportStatus,
 } from "./adminUtils";
-import {
-  BAIET_CAMPUS_CENTER,
-  BAIET_MAP_OPTIONS,
-  getCampusPoint,
-} from "../../utils/campusMap";
-
-const pinStatus = (status) => {
-  if (status === "Resolved") return "https://maps.google.com/mapfiles/ms/icons/green-dot.png";
-  if (status === "In Progress") return "https://maps.google.com/mapfiles/ms/icons/orange-dot.png";
-  return "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
-};
+import { getCampusPoint } from "../../utils/campusMap";
 
 const AdminTransparencyMapPage = () => {
   const [reports, setReports] = useState([]);
@@ -55,11 +45,7 @@ const AdminTransparencyMapPage = () => {
     () =>
       filteredReports.map((report, index) => {
         const block = report.block || report.location?.split("-")[0]?.trim() || "Block B";
-        const coords =
-          typeof report.latitude === "number" && typeof report.longitude === "number"
-            ? { lat: report.latitude, lng: report.longitude, zone: getCampusPoint(block, index).zone }
-            : getCampusPoint(block, index);
-        return { ...report, block, ...coords };
+        return { ...report, block, zone: getCampusPoint(block, index).zone };
       }),
     [filteredReports]
   );
@@ -91,33 +77,17 @@ const AdminTransparencyMapPage = () => {
         </div>
       </div>
 
-      <div className="admin-grid-2">
-        <div className="admin-card-v2">
-          <LoadScript googleMapsApiKey="AIzaSyAg-DiGUEFgQYZYT2zgQ1JInN7vlx7O4cY">
-            <GoogleMap
-              mapContainerClassName="admin-map-canvas"
-              center={BAIET_CAMPUS_CENTER}
-              zoom={16}
-              options={BAIET_MAP_OPTIONS}
-            >
-              {points.map((point) => (
-                <Marker
-                  key={point.reportNumber}
-                  position={{ lat: point.lat, lng: point.lng }}
-                  icon={pinStatus(point.status)}
-                  onClick={() => setSelected(point)}
-                />
-              ))}
-            </GoogleMap>
-          </LoadScript>
-        </div>
+      <div className="admin-transparency-map-shell">
+        <Transparencymap embedded categoryFilter={categoryFilter} onIssueSelect={setSelected} />
+      </div>
 
+      <div className="admin-grid-2">
         <div className="admin-card-v2">
           <h2>Issue Detail / Status</h2>
           {selected ? (
             <div className="map-detail-v2">
               <p><strong>Report:</strong> {selected.reportNumber}</p>
-              <p><strong>Issue:</strong> {selected.type}</p>
+              <p><strong>Issue:</strong> {selected.type || selected.issue}</p>
               <p><strong>Zone:</strong> {selected.zone}</p>
               <select
                 value={selected.status}
@@ -125,6 +95,7 @@ const AdminTransparencyMapPage = () => {
                   try {
                     setReports(await updateReportStatus(selected.reportNumber, e.target.value));
                     setSelected((prev) => (prev ? { ...prev, status: e.target.value } : prev));
+                    window.dispatchEvent(new Event("eco-reports-changed"));
                     setError("");
                   } catch (err) {
                     setError(err.message || "Unable to update status.");

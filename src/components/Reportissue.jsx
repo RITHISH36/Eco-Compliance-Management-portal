@@ -1,17 +1,50 @@
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import * as maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import Header from "./Header"
 import { createIssueReport } from "../utils/reportStore";
 import { CAMPUS_BLOCKS, normalizeCampusBlock } from "../utils/campusBlocks";
 import { getCurrentUser } from "../utils/session";
 import {
+    BAIET_CAMPUS_BOUNDS,
     BAIET_CAMPUS_CENTER,
-    BAIET_MAP_OPTIONS,
     getBlockPoint,
+    isPointInsideCampus,
 } from "../utils/campusMap";
 import { useToast } from "./ui/ToastProvider";
 
+const OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const SATELLITE_STYLE = {
+    version: 8,
+    glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+    sources: {
+        satellite: {
+            type: "raster",
+            tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+            tileSize: 256,
+            attribution: "Imagery &copy; Esri",
+        },
+        labels: {
+            type: "raster",
+            tiles: ["https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"],
+            tileSize: 256,
+            attribution: "Labels &copy; Esri",
+        },
+    },
+    layers: [
+        { id: "satellite", type: "raster", source: "satellite" },
+        { id: "satellite-labels", type: "raster", source: "labels" },
+    ],
+};
+const CAMPUS_BOUNDS = [
+    [BAIET_CAMPUS_BOUNDS.west, BAIET_CAMPUS_BOUNDS.south],
+    [BAIET_CAMPUS_BOUNDS.east, BAIET_CAMPUS_BOUNDS.north],
+];
+
 const Reportissue = () => {
+    const mapContainerRef = useRef(null);
+    const mapRef = useRef(null);
+    const markerRef = useRef(null);
     const [isfile, setisfile] = useState(null)
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -22,7 +55,71 @@ const Reportissue = () => {
     const [selectedPoint, setSelectedPoint] = useState(() => getBlockPoint(CAMPUS_BLOCKS[0]));
     const [locationMode, setLocationMode] = useState("block");
     const [locationStatus, setLocationStatus] = useState("Trying to detect your current location...");
+    const [mapMode, setMapMode] = useState("local");
     const toast = useToast();
+
+    useEffect(() => {
+        if (!mapContainerRef.current || mapRef.current) return undefined;
+
+        const map = new maplibregl.Map({
+            container: mapContainerRef.current,
+            style: OPENFREEMAP_STYLE,
+            center: [BAIET_CAMPUS_CENTER.lng, BAIET_CAMPUS_CENTER.lat],
+            zoom: 16.4,
+            minZoom: 15,
+            maxZoom: 19,
+            maxBounds: CAMPUS_BOUNDS,
+            renderWorldCopies: false,
+            dragRotate: false,
+            pitchWithRotate: false,
+            attributionControl: false,
+        });
+        mapRef.current = map;
+        map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+        map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
+        map.once("load", () => map.fitBounds(CAMPUS_BOUNDS, { padding: 24, duration: 0 }));
+
+        return () => {
+            markerRef.current?.remove();
+            map.remove();
+            mapRef.current = null;
+            markerRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        const updateStyle = () => map.fitBounds(CAMPUS_BOUNDS, { padding: 24, duration: 0 });
+        map.setStyle(mapMode === "satellite" ? SATELLITE_STYLE : OPENFREEMAP_STYLE);
+        map.once("style.load", updateStyle);
+
+        return () => map.off("style.load", updateStyle);
+    }, [mapMode]);
+
+    useEffect(() => {
+        if (!mapRef.current || !selectedPoint) return;
+
+        markerRef.current?.remove();
+        const markerElement = document.createElement("div");
+        markerElement.className = "report-map-marker";
+        markerRef.current = new maplibregl.Marker({ element: markerElement })
+            .setLngLat([selectedPoint.lng, selectedPoint.lat])
+            .addTo(mapRef.current);
+    }, [selectedPoint]);
+    const handleDetectedLocation = (point) => {
+        if (isPointInsideCampus(point)) {
+            setSelectedPoint(point);
+            setLocationMode("gps");
+            setLocationStatus("Current device location tagged inside the BIT campus.");
+            return;
+        }
+
+        setLocationMode("block");
+        setSelectedPoint(getBlockPoint(block));
+        setLocationStatus("Device location is outside BIT campus. Using the selected block center.");
+    };
     const handlefile = (e) => {
         const selectedffile = e.target.files[0]
         if (selectedffile) {
@@ -57,12 +154,10 @@ const Reportissue = () => {
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                setSelectedPoint({
+                handleDetectedLocation({
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
-                })
-                setLocationMode("gps")
-                setLocationStatus("Current device location tagged automatically.")
+                });
             },
             () => {
                 setLocationMode("block")
@@ -88,12 +183,10 @@ const Reportissue = () => {
         setLocationStatus("Refreshing current location...")
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                setSelectedPoint({
+                handleDetectedLocation({
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
-                })
-                setLocationMode("gps")
-                setLocationStatus("Current device location tagged automatically.")
+                });
             },
             () => {
                 setLocationMode("block")
@@ -215,17 +308,11 @@ const Reportissue = () => {
                                 <label>Auto-Tagged Campus Location</label>
                                 <span>Location is captured from your device when permission is enabled.</span>
                             </div>
-                            <div className="report-map-shell">
-                                <LoadScript googleMapsApiKey="AIzaSyAg-DiGUEFgQYZYT2zgQ1JInN7vlx7O4cY">
-                                    <GoogleMap
-                                        mapContainerStyle={{ width: "100%", height: "100%" }}
-                                        center={selectedPoint || BAIET_CAMPUS_CENTER}
-                                        zoom={17}
-                                        options={BAIET_MAP_OPTIONS}
-                                    >
-                                        {selectedPoint ? <Marker position={selectedPoint} /> : null}
-                                    </GoogleMap>
-                                </LoadScript>
+                            <div className="report-map-toolbar" role="tablist" aria-label="Report location map type">
+                                <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "active" : ""} onClick={() => setMapMode("local")}>Map</button>
+                                <button type="button" role="tab" aria-selected={mapMode === "satellite"} className={mapMode === "satellite" ? "active" : ""} onClick={() => setMapMode("satellite")}>Satellite</button>
+                            </div>
+                            <div className="report-map-shell" ref={mapContainerRef}>
                             </div>
                             <div className="map-pin-summary">
                                 <div>

@@ -13,6 +13,7 @@ import AdminLogin from "./components/AdminLogin";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboardPage from "./components/admin/AdminDashboardPage";
 import AdminManageIssuesPage from "./components/admin/AdminManageIssuesPage";
+import AdminSpamReportsPage from "./components/admin/AdminSpamReportsPage";
 import AdminTransparencyMapPage from "./components/admin/AdminTransparencyMapPage";
 import AdminAnalyticsPage from "./components/admin/AdminAnalyticsPage";
 import AdminUsersPage from "./components/admin/AdminUsersPage";
@@ -96,6 +97,7 @@ const App=()=>{
       <Route index element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="dashboard" element={<AdminDashboardPage />} />
       <Route path="manage-issues" element={<AdminManageIssuesPage />} />
+      <Route path="spam-reports" element={<AdminSpamReportsPage />} />
       <Route path="transparency-map" element={<AdminTransparencyMapPage />} />
       <Route path="analytics" element={<AdminAnalyticsPage />} />
       <Route path="users" element={<AdminUsersPage />} />

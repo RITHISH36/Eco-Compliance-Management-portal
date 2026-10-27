@@ -28,6 +28,8 @@ const normalizeProgress = (status, progress) => {
   return 10;
 };
 
+const excludeSpamReports = (reports = []) => reports.filter((report) => !report.isSpam);
+
 export const normalizeReport = (report) => {
   const status = normalizeStatus(report.status);
 
@@ -58,12 +60,12 @@ export const normalizeReport = (report) => {
 
 export const getReports = async (query) => {
   const reports = await fetchReports(query);
-  return reports.map(normalizeReport);
+  return excludeSpamReports(reports).map(normalizeReport);
 };
 
 export const getMyReports = async () => {
   const reports = await fetchMyReports();
-  return reports.map(normalizeReport);
+  return excludeSpamReports(reports).map(normalizeReport);
 };
 
 export const createIssueReport = async (payload) => {

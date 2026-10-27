@@ -1,8 +1,18 @@
-import { FaGlobe, FaShieldAlt, FaUserCircle } from "react-icons/fa";
+import { FaMoon, FaShieldAlt, FaSun, FaUserCircle } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { HashLink } from "react-router-hash-link";
 import { clearSession, getCurrentUser, isLoggedIn } from "../utils/session";
+
+const getInitialTheme = () => {
+    if (typeof window === "undefined") return "light";
+
+    const savedTheme = window.localStorage.getItem("eco-theme");
+    if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
+
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+};
+
 const Header = (props) => {
     const { setisopen } = props
     const navigate = useNavigate()
@@ -12,7 +22,13 @@ const Header = (props) => {
         role: "",
     })
     const [showProfileMenu, setshowProfileMenu] = useState(false)
+    const [theme, setTheme] = useState(getInitialTheme)
     const profileMenuRef = useRef(null)
+
+    useEffect(() => {
+        document.documentElement.dataset.theme = theme;
+        window.localStorage.setItem("eco-theme", theme);
+    }, [theme])
 
     useEffect(() => {
         const syncAuth = () => {
@@ -70,6 +86,10 @@ const Header = (props) => {
         setshowProfileMenu(false)
         navigate("/")
     }
+
+    const toggleTheme = () => {
+        setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark")
+    }
     return (
         <>
             <div className="header">
@@ -80,7 +100,15 @@ const Header = (props) => {
                     <span className="nav"><NavLink to="/checkstatus" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Check status</NavLink></span>
                     <span className="nav"><NavLink to="/transparencymap" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Transparency map</NavLink></span>
                     <span className="nav"><NavLink to="/eco-awareness" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>Eco Awareness</NavLink></span>
-                    <span className="language"><FaGlobe /></span>
+                    <button
+                        type="button"
+                        className="theme-toggle"
+                        onClick={toggleTheme}
+                        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                    >
+                        {theme === "dark" ? <FaSun /> : <FaMoon />}
+                    </button>
                     {authState.isLoggedIn ? (
                         <div className="profile-menu" ref={profileMenuRef}>
                             <button
@@ -103,8 +131,8 @@ const Header = (props) => {
                     <span className="admin-login" onClick={openadmin}><FaShieldAlt />Admin</span>
                 </div>
                 <div className="header-logo">
-                    <img src="/logo-removebg-preview.png" alt="Eco-Compliance Portal Logo" />
-                    <h3>Eco-Compliance Portal</h3>
+                    <img src="/logo-removebg-preview.png" alt="Campus Maintenance Portal Logo" />
+                    <h3>Campus Maintenance Portal</h3>
                 </div>
             </div>
         </>
