@@ -5,6 +5,10 @@ import Header from "./Header";
 import { getReports } from "../utils/reportStore";
 import { reports as fallbackReports } from "../data/reports";
 import campusBlocks from "../data/campusBlocks.json";
+import { setWorkerUrl } from "maplibre-gl";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+
+setWorkerUrl(workerUrl);
 import {
   BAIET_CAMPUS_BOUNDS,
   BAIET_CAMPUS_CENTER,
