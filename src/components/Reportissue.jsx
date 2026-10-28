@@ -54,7 +54,7 @@ const Reportissue = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedPoint, setSelectedPoint] = useState(() => getBlockPoint(CAMPUS_BLOCKS[0]));
     const [locationMode, setLocationMode] = useState("block");
-    const [locationStatus, setLocationStatus] = useState("Trying to detect your current location...");
+    const [locationStatus, setLocationStatus] = useState(`Using ${CAMPUS_BLOCKS[0]} block center.`);
     const [mapMode, setMapMode] = useState("local");
     const toast = useToast();
 
@@ -143,34 +143,6 @@ const Reportissue = () => {
             setLocationStatus(`Using ${block} center until browser location is available.`)
         }
     }, [block])
-
-    useEffect(() => {
-        if (!navigator.geolocation) {
-            setLocationMode("block")
-            setSelectedPoint(getBlockPoint(block))
-            setLocationStatus("Browser location is unavailable. Using selected block center.")
-            return
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                handleDetectedLocation({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                });
-            },
-            () => {
-                setLocationMode("block")
-                setSelectedPoint(getBlockPoint(block))
-                setLocationStatus("Location permission denied. Using selected block center.")
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000,
-            }
-        )
-    }, [])
 
     const detectCurrentLocation = () => {
         if (!navigator.geolocation) {
@@ -306,7 +278,7 @@ const Reportissue = () => {
                         <div className="map-picker-card">
                             <div className="map-picker-head">
                                 <label>Auto-Tagged Campus Location</label>
-                                <span>Location is captured from your device when permission is enabled.</span>
+                                <span>Using the selected block center. Device location is optional.</span>
                             </div>
                             <div className="report-map-toolbar" role="tablist" aria-label="Report location map type">
                                 <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "active" : ""} onClick={() => setMapMode("local")}>Map</button>

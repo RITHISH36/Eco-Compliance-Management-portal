@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { getSpamReports } from "./adminUtils";
 
+const demoDuplicateReport = {
+  reportNumber: "RPT-DEMO-001",
+  type: "Network Issue",
+  category: "Network Issue",
+  location: "Academic Block A - Computer Lab",
+  duplicateOf: "RPT-DEMO-000",
+  duplicateReason: "Same network outage reported for this location.",
+  duplicateConfidence: 0.96,
+};
+
 const AdminSpamReportsPage = () => {
   const [reports, setReports] = useState([]);
   const [error, setError] = useState("");
@@ -8,10 +18,12 @@ const AdminSpamReportsPage = () => {
   useEffect(() => {
     const loadReports = async () => {
       try {
-        setReports(await getSpamReports());
-        setError("");
-      } catch (err) {
-        setError(err.message || "Unable to load duplicate reports.");
+        const nextReports = await getSpamReports();
+        setReports(nextReports.length ? nextReports : [demoDuplicateReport]);
+        setError(nextReports.length ? "" : "Showing demo duplicate data because no duplicate reports are available.");
+      } catch {
+        setReports([demoDuplicateReport]);
+        setError("Showing demo duplicate data because the server could not be reached.");
       }
     };
 
